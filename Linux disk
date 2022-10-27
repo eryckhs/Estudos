@@ -1,0 +1,415 @@
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Criando um sistema de arquivos .ext
+    
+    mkfs.ext2/3/4 dev/sdx? ; cria o sistema de arquivos desejado em determinado disco
+    
+    -c Procura blocos danificados na partição antes de criar o sistema de arquivos.
+    -L NOME Coloca um nome (label) no sistema de arquivos.
+    -b NUM Define o tamanho do bloco, em bytes.
+    -m NUM Define a porcentagem de espaço em disco reservada para manutenção (por padrão reservado para o root, mas isto é alterável).
+
+    Agora para acessar a partição deverá ser usado o comando: mount /dev/sdx? /mnt -t ext2
+
+    EVITE FAZER ISSO NO DISCO INTEIRO, APENAS EM PARTIÇÕES
+
+    Se você quiser fazer em um arquivo vai procurar na net ou no guia da foca intermediaŕio, puta negocio inutil.
+    se vc quiser converter a partição de ext2 para ext3 execute o comando tune2fs na partição que deseja converter com a opção -j ou -J
+    [tamanho_journal] para adicionar o suporte a Journaling na partição.
+    N sei o pq vc faria isso, mas para ir de ext3 para ext2 use o comando tune2fs -O^has_journal /dev/sdxx e depois edite o arquivo /etc/fstab para ext2
+    em ambas as trocas de ext2 e ext3 é necessário desmontar e montar elas novamente para que o fs delas sejam atualizados.
+    
+    note que pode ser necessário alterar o arquivo /etc/fstab para montar uma partição como ext/2/3/4 quando o linux for iniciado.
+    
+    Para renomear uma partição use o comando e2label [dispositivo][nome]
+    
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Finalidade partição swap:
+    
+    Este tipo de partição é usado para oferecer o suporte a memória virtual ao GNU/Linux em adição a
+    memória RAM instalada no sistema.Somente os dados na memória RAM são processados pelo processador, por ser mais rápida. Desta forma
+    quando você está executando um programa e a memória RAM começa a encher, o GNU/Linux move automaticamente os dados que não estão sendo usados para 
+    a partição Swap e libera a memória RAM para a continuar carregando os dados necessários pelo. Quando os dados movidos para a partição Swap são
+    solicitados, o GNU/Linux move os dados da partição Swap para a Memória. Por este motivo a partição Swap também é chamada de Troca ou memória virtual.
+
+
+Formatar uma partição com Swap:
+
+    mkswap /dev/sdx? ; cria a partição em determinado disco
+    swapon /dev/sdx? ; ativar a partição swap
+    
+    use a opção -c para checar se existem agrupamentos danificados na partição ;
+    a opção -v1 permite a criação da swap com mais de 128mb.
+    
+    para atualizar uma swap antiga basta reformatar ela usando mkswap -v1 /dev/sdx?
+    
+    caso esteja usando mais de 1 partição swap, é interresante determinar o numero de prioridade de cada uma, para isso use a opção -p NUM. 
+    quanto menor o valor maior a prioridade.
+    
+    O swap não precisa ser montado em nenhum diretório e nem no fstab, mas ainda é necessário adicionar o seu UUID dntro do fstab para que a partição de swap seja 
+    iniciada no boot. blkid para UUID, none em mount point, type swap, defaults 0 0. joia
+    
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+fdisk:
+
+    fdisk -l /dev/sdx? ; listar as partições em determinado disco
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Lost+found
+
+    O utilitário mklost+found cria o diretório especial lost+found no diretório atual. O diretório lost +found é criado automaticamente após a formatação da 
+    partição com o mkfs.ext2, a função deste diretório é pré-alocar os blocos de arquivos/diretório durante a execução do programa fsck.ext2 na recuperação 
+    de um sistema de arquivos
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Mostra detalhes sobre uma partição Linux:
+    
+    dumpe2fs [opções] [partição]
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+reiserfs
+    Caso queira usar o reiserfs olha o guia da foca, pois ele habilita a diminuição online de volumes lógicos, deve ter mais funções.
+
+    Use resize_reiserfs -s-1G [device] para diminuir o tamanho de um FS.
+    
+    
+    
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/proc:
+    
+    A modificação dos arquivos do diretório /proc é o método mais usado para modificar a configuração do sistema e muitos programas também dependem
+    deste diretório para funcionar. Nele você tem todo o controle do que o seus sistema operacional está fazendo.
+    
+diretórios dentro de /proc:
+    
+    mounts - Sistemas de Arquivos atualmente montados
+    pci - Detalhes sobre dispositivos PCI do sistema
+    filesystems - Sistemas de arquivos em uso atualmente
+    devices - Dispositivos usados no sistema
+    cpuinfo - Detalhes sobre a CPU do sistema
+    uptime - Tempo de execução do sistema
+    version - Versão atual do Kernel, programa usado na compilação, etc
+    ioports - Portas de Entrada e Saída usadas pelos dispositivos do sistema
+
+    Diretório net - Dados sobre a rede do sistema
+    Diretório sys - Dados sobre outras áreas do sistema
+    Diretório scsi - Detalhes sobre dispositivos SCSI do sistema
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+LVM - Logical Volume Manager
+    
+    O lvm é um intermediador entre as suas unidades de armazenamento físicas (hds, ssds) e o armazenamento lógico. O lvm faz a associação entre 
+    dispositivos/partições físicas e dispositivos lógicos.
+    
+    o lvm atua como um gerenciador de espaço lógico, habilitando escalabilidade de espaço interno a partir dos discos lógicos.
+    
+    como funciona: o lvm junta todo o armazenamento físico (Physical Volume) disponível dentro de um Volume Group (VG) e dentro desse volume grupo você é capaz
+    de criar partições lógicas, ou Logical Volume (LV).
+    
+    Aplicar LVM na instalação inicial do linux: https://www.youtube.com/watch?v=MeltFN-bXrQ&ab_channel=LearnLinuxTV
+    Na tela de particionamento de discos, vá em 'manual', depois em 'configure the Logical Volume Manager' para abrir a tela de particionamento manual da lvm.
+    Crie um novo Volume group e selecione o espaço físico (Physical Volume) disponível. 
+    Agora podemos criar um Logical Volume e para isso nós devemos selecionar o Volume Group desejado. 
+    Após nomear o Logical Volume coloque o tamanho desejado e finalize.
+    De volta na tela de particionamento nós temos o Logical Volume disponível para configuração, acesse ele e defina como ela será usada (ext4), ig. formatar como um 
+    Sistema de arquivos (fs), depois selecione o Mount Point. Pronto.
+    
+    
+    ATENÃO NOS SEGUINTES COMANDOS: como todos mexem com o armazenamento alguns comandos podem apagar o seu HD inteiro, fica ligado pra n errar.
+    
+    pvcreate [device] ; cria um novo Physical Volume, converte o novo armazenamento INTEIRAMENTE em lvm, mas n atribui nenhum Volume Group a ele.
+    vgcreate [nome] [device] ; Cria um novo Volume Group a partir de um device em lvm novo.
+    lvcreate [nome do Volume Group] -L [tamanho] -n [nome]
+    
+    vgextend [volume group][device] ; este comando irá extender o Volume Group com o novo Physical Volume criado, vai adicionar ele ao grupo. mas não significa que 
+    será atribuido um Logical Volume a ele. O comando vgextend apenas disponibiliza mais espaço para a lvm. Free Space
+    lvextend -r -L +10G [device] ; esse comando irá exetender o tamanho do Logical Volume por 10G e irá ajustar o file system para o novo tamanho (-r). Podemos usar
+    o mesmo comando mas com -l minusculo e depois a porcentagem do espaço livre que eu quero adicionar ao meu Logical Volume (lvextend -r -l +100%FREE [device]).
+
+    vgdisplay ; mostra todos os dados dos Volume Group presentes na sua máquina.
+    lvdisplay ; mostra todos os dados dos Logical Volumes presentes na sua máquina.
+    
+    lvreduce -L-1G [device] ; reduz o tamanho de um Logical Volume, mas atenção você deve antes diminuir o tamanho do file system presente.
+        diminuir o FS:
+            ext2/3/4 - resize2fs /dev/lvmdisk/tmp 4G e depois lvreduce -L-1G /dev/lvmdisk/tmp
+            reiserfs - resize_reiserfs -s-1G /dev/lvmdisk/tmp e depois lvreduce -L-1G /dev/lvmdisk/tmp
+
+    
+    para formatar manualmente um novo Logical Volume, use o comando 'mkfs.ext4 [device]' ou outro modo de formatação que preferir.
+    
+    Proximo passo é montar este Logical Volume, mas antes é aconselhavel que um novo diretório seja criado, para isso use 'mkdir -p /mnt/extra/logs' e monte usando
+    'mount [device] /mnt/extra/logs'. Use df -h para confirmar se ele está corretamente montado.
+    
+    Para que o novo Logical Volume seja montado toda vez que o sistema for iniciado nós precisamos adicionar algumas linhas ao arquivo /etc/fstab. faça um backup antes!
+    edite o arquivo /etc/fstab e adicione a seguinte linha 'UUID = <Block ID for Logical Volume>'   /mnt/extra/logs         ext4            defaults        0       2
+                                                            Use blkid para pegar o UUID          Local onde será montado    Formatação      Opções          dump       Prioridade            
+    
+    Para verificar se o arquivo /etc/fstab está funcionando corretamente utilize: 'mount -a', ele irá montar todos os volumes presentes no arquivo de configuração.
+    
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Comandos importantes:
+    
+    df -h ; The df command displays the amount of disk space available on the filesystem with each file name's argument in human-readable form.
+    resize2fs ; Ajusta o File System alocado em um armazenamento para ocupar o novo espaço disponível.
+    lsblk [opções] [<dispositivo> ...] - Lista informação sobre dispositivos de bloco.
+    du -hc - lista o tamanho dos arquivos em um diretório
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Formatar pen-drives:
+    
+    Para formatar pen-drives para serem usados no GNU/Linux use o comando:
+    
+    mkfs.ext2 [opções] [device]
+
+    Em alguns sistemas você deve usar mke2fs no lugar de mkfs.ext2. A opção -c faz com que o mkfs.ext2 procure por blocos danificados no pen-drive.
+    
+    Para formatar pen-drives para serem usados no Windows use o comando
+    
+    mkfs.msdos [opções] [device]
+    
+    Nas opções podemos usar -F para determinar a formatação em F16 ou F32, -n para atribuir um nome, -c para verificar se tem blocos daninicados
+    
+    para formatação gráfica use o gparted, gfloppy e entre outros.
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Pontos de montagem - /fstab:
+    
+    Antes de montar o seu dispositivo é necessário formatar o dispositivo com o mkfs.
+    
+    O GNU/Linux acessa as partições existente em seus discos rígidos e disquetes através de diretórios. Os diretórios que são usados para acessar (montar) 
+    partições são chamados de Mount Points.
+    
+    No GNU/Linux, os dispositivos existentes em seu computador são identificados por um arquivo referente a este dispositivo no diretório /dev (devices).
+    
+    Para montar, acessar, um disco podemos usar o comando: 'mount [device] [mount point] [opções]. Use o diretório /mnt para montar os seus discos.
+    
+    
+    Usamos o arquivo /etc/fstab para configurar os locais de armazenamento durante a inicialização do sistema. para isso precisamos inserir determinados dados 
+    referentes ao disco e a sua configuração, como blkid (UUID), o local onde será montado
+    O arquvio fstab contém parâmetros sobre as partições que são lidos pelo comando mount. A sua estrutura é a seguinte:
+    
+    Sistema_de_arquivos     Ponto_de_Montagem       Tipo        Opções          dump        ordem
+    
+    Sistema de arquivos: partição que deseja montar (UUID).
+    Ponto de montagem: mount point, diretório.
+    Opções: opções que são montadas junto com o sistema de arquivos, defaults n tem erro. 
+    Dump: frequencia dos backups feito pelo programa dump, 0 desativa.
+    Ordem: define a ordem de prioridade que os sistemas de arquivos serão verificados quando o sistema iniciar. 0 o sistema n é verificado, 1 de, preferencia, é o root
+    
+    Para verificar se o arquivo /etc/fstab está funcionando corretamente utilize: 'mount -a', ele irá montar todos os volumes presentes no arquivo de configuração
+    
+    Para desmontar uma partição de disco use o comando: 'umount [device]'.
+    
+    
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+GRUB:
+    
+    O GRUB (Grand Unified Boot Loader) é um gerenciador de boot.
+    
+    instalar o GRUB no MBR(Master Boot Record): # /sbin/grub-install /dev/hda
+    Este comando grava o GRUB no MBR (master boot report)do primeiro disco e cria o diretório /boot/grub onde estarão os arquivos necessários para o seu funcionamento. Neste ponto o 
+    GRUB já está instalado e quando você reiniciar seu computador irá se deparar com uma linha de comandos. Você é capaz de alterar o arquivo menu.lst para configurar
+    o GRUB como desejar, para isso acesse o arquivo '/usr/share/doc/grub/examples/menu.lst' e depois de edita-lo, copie para /boot/grub. O GRUB também tem uma linha 
+    de comando, da uma olhada no guia da foca ou no site oficial pra entender melhor.
+    
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+EFI System Partition
+    
+    A partição de sistema EFI é uma partição independente do sistema operacional que atua como o local de armazenamento para os gerenciadores de boot, aplicativos 
+    e drivers EFI a serem lançados pelo firmware UEFI. É obrigatório para a inicialização do UEFI.
+    para mais detalhes: https://wiki.archlinux.org/title/EFI_system_partition
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+btrfs:
+    
+    btrfs é um filesystem para dispositivos de armazenamento, mas ele vai além de ser apenas um file system. O btrfs é capaz de criar subvolumes dentro de um mesmo disco
+    e tratar esses subvolumes como entidades diferentes, ou seja, dentro de um mesmo disco os subvolumes irão compartilhar do armazenamento total desse disco, diferente 
+    das partições que são divididas fisicamente em partes diferentes. O btrfs também é capaz de gerar snapshots que salvam uma cópia do seu sistema. note que o btrfs é
+    um sistema copy-on-write, ou seja, ele copia os dados ao inves de sobreescrever, garantindo a integridade dos dados.
+    
+    video: https://www.youtube.com/watch?v=RPO-fS6HQbY&ab_channel=LearnLinuxTV
+    
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Permissões:
+    
+    drwxrwxr-x 2 eryck eryck genshin_impact.r.ganyu.34
+    
+    no exemplo de arquivo acima o primeiro caracter indica se ele é um diretório ou um arquivo.
+    nos proximos 3 caracteres indicam as permissões do usuário. nos proximos 3 são as permissões de grupo. e os 3 ultimos são as permissões de outros, aqueles que 
+    não são nem o usuário e nem pertenem ao grupo.
+    
+    nós usamos o comando chmod para alterar as permissões de um arquivo. use u+rwx, g+rwx e o+rwx para adicionar as permissões de read, write e execute para u(suários),
+    g(roups) e o(ther). para otimizar esse processo podemos usar valores numéricos, eles são: r=4, w=2, x=1. usamos a soma deles para atribuir a quantidade desejada 
+    de permissões, ou seja, quando usamos chmod 764 [file] basicamente estamos fazendo chmod u+rwx g+rw o+r.
+    
+    podemos adicionar a opção recursiva -R para alterar todos os arquivos dentro de um diretório, mas esse comando também irá alterar as permissões do diretório então
+    não é muito usual. para mudar todas as permissões dos arquivos dentro de um diretório usamos caracteres coringa para puxar todos os arquivos, ou seja, 
+    chmod 600 [diretório]/*.
+    também podemos usar o comando 'find' para encontrar os arquivos que queremos e usar a opção '-exec chmod xxx {} +' para alterar as permissões do que queremos.
+    
+    para mudar o dono de um arquivo/diretório usamos o comando 'chown' (change ownership). usamos as opções -R para mudar o diretório e todos os arquivos abaixo dele.
+    podemos usar o 'chown' para mudar o grupo de acesso junto com o seu dono, adicione ':group' após o nome do novo dono para fazer isso.
+    sua sintaxe é: sudo chown -R [owner:group] [dietório/arquivo].
+      
+    use o comando ghgrp para mudar o grupo sem ter permissões de superusuário.
+    
+    o comando umask determina o padrão de permissões dos arquvos e diretórios que serão criados no seu sistema. use 'umask xxx' para determinar os níveis de permissão.
+    o comando umask apenas funciona para novo arquivos, use o chmod para modificar arquivos existentes.
+    
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Inode:
+    
+    Inodes são objetos que contém metaddados sobre seus arquivos dentro do sistema de arquivos. eles contém basicamente toda a informação em relação aos arquivos.
+    inodes são próprios de cada dispositivo de armazenamento e/ou partições, cada um tem um numero diferente.
+    
+Links:
+    ln -s [caminho do arquivo][caminho do destino]: cria um link simbolico de um arquivo. o link simbólico cria um atalho para um arquvio, um novo arquivo, com um 
+    inode diferente, que indica o caminho do arquivo original. já o link solido é um cópia do arquivo original, tanto que o seu inode é o mesmo.
+    
+    
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+find:
+    
+    Use o comando find para localizar arquivos dentro de seu sistema. a sua sintaxe é a seguinte:
+    
+    find [caminho][opções][opções]
+    ig.: find /home/eryck -name *.txt -type f -exec {} +
+    
+    voce pode usar as opções para melhorar a busca e deixar ela mais precisa e específica.
+    -name indica o nome que vc quer.
+    -type indica o tipo do arquivo, se é uma file (f) ou diretório (d).
+    -exec executa um comando sobre os arquivos encontrados, como por exemplo o chmod para alterar as permissões de apenas as files. o {} é usado como um placeholder
+          onde as files encontradas serão colcadas para executar o comando. 
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/etc:
+    
+    /etc/gshadow - Senhas ocultas dos grupos existentes no sistema
+    /etc/fstab - Contém detalhes para a montagem dos sistemas de arquivos do sistema
+    /etc/crontab - Arquivo que contém a programação de programas que serão executados em horários/datas programadas.
+    /etc/security - Este diretório contém arquivos para controle de segurança e limites que serão aplicados aos usuários do sistema
+    /etc/network - Este diretório contém as configurações das interfaces (placas) de rede do sistema e outras opções úteis para a configuração/segurança da rede.
+    /etc/network/interfaces - ativar e desativas as interfaces de rede
+    /etc/hostname - Arquivo lido pelo utilitário hostname para definir o nome de sua estação de trabalho.
+    /etc/passwd - É o arquivo mais cobiçado por Hackers porque contém os dados pessoais do usuário como o login, uid, telefone e senha 
+    /etc/shadow - Este arquivo armazena as senhas criptografadas caso estiver usando o recurso de senhas ocultas. Este arquivo somente pode ser lido  pelo usuário root.
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+manutenção:
+    
+    A checagem do sistema de arquivos permite verificar se toda a estrutura para armazenamento de arquivos, diretórios, permissões, conectividade e superfície 
+    do disco estão funcionando corretamente
+    
+    fsck.ext2 - Verifica o sistema de arquivos EXT2 ou EXT3. Pode também ser encontrado com o nome e2fsck.
+    
+    badblocks - Procura blocos defeituosos em um dispositivo. Note que este apenas pesquisa por blocos defeituosos, sem alterar a configuração do disco
+    
+    defrag - Permite desfragmentar uma unidade de disco. 
+    e2defrag - Desfragmenta sistemas de arquivos Ext2
+    
+    A fragmentação é o armazenamento de arquivos em áreas não seqüenciais (uma parte é armazenada no começo a outra no final, etc), isto diminui o desempenho da 
+    unidade de disco porque a leitura deverá ser interrompida e feita a movimentação da cabeça para outra  região do disco onde o arquivo continua, por este motivo 
+    discos fragmentados tendem a fazer um grande barulho na leitura e o desempenho menor. A desfragmentação normalmente é desnecessária no GNU/Linux porque o sistema 
+    de arquivos ext2 procura automaticamente o melhor local para armazenar o arquivo. Mesmo assim, é recomendável desfragmentar um sistema de arquivos assim que sua 
+    taxa de fragmentação subir acima de 10%. A taxa de fragmentação pode ser vista através do fsck.ext2.
+    
+    O sistema de arquivos deve estar desmontado ao fazer a desfragmentação
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+cron:
+    
+    O cron é um daemon que permite o agendamento da execução de um comando/programa para um determinado dia/mês/ano/hora. Para agendar uma nova tarefa, basta editar 
+    o arquivo /etc/crontab com qualquer editor de texto e definir o mês/dia/hora que a tarefa será executada. Não é necessário reiniciar o daemon do
+    cron porque ele verifica seus arquivos a cada minuto.
+    
+    00 10 * * * root sync
+    # Executa o comando sync todo o dia as 10:00
+
+    Os campos do arquivo são separados por um ou mais espaços ou tabulações. Um asterisco * pode ser usado nos campos de data e hora para especificar todo o intervalo 
+    disponível. O hífen - serve para especificar períodos de execução (incluindo a o número inicial/final). A vírgula serve para especificar lista de números.
+    Passos podem ser especificados através de uma /.
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
