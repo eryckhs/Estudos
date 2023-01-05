@@ -1,0 +1,207 @@
+Referencias:
+
+https://www.digitalocean.com/community/tutorials/how-to-install-mariadb-on-debian-11
+https://mariadb.com/kb/en/configuring-mariadb-for-remote-client-access/#editing-the-defaults-file
+https://mariadb.com/kb/en/systemd/
+
+
+______________________________________________________________________________________________________________________________________________________
+
+instalar o banco de dados em uma vm; V
+habilitar o acesso remoto ao banco de dados; V 
+criar um usuário;
+criar um banco de dados;
+criar uma tabela;
+inserir/alterar/apagar os dados;
+fazer pesquisa.
+
+______________________________________________________________________________________________________________________________________________________
+Instalar MariaDB usando apt:
+
+    # sudo apt update
+    # sudo apt install mariadb-server
+
+Para uma instalaçao segura, insira o comando:
+
+    # sudo mysql_secure_installation
+
+______________________________________________________________________________________________________________________________________________________
+Acesso remoto:
+
+Dentro do servidor use:
+
+    # mysqld --help --verbose
+
+Para obter as default files.
+Uma vez identificadas as default files, procure por elas, em ordem de prioridade, em seu servidor.
+Com o arquivo de configuração identificado, adicione as seguintes linhas no arquivo:
+
+    [mysqld]
+    skip-networking=0
+    skip-bind-address
+
+Essas linhas permitemque o MariaDB escute conexões remotas.
+Para ter certeza de que a configuração foi feita com sucesso, restarte o serviço com:
+
+    # sudo systemctl restart mariadb.service
+
+e rode o comando:
+
+    # mysql --print-defaults
+
+e verifique se as linhas que foram colocadas no arquivo de configuração aparecem no output.
+Em seguida precisamos criar um usuário para acessar remotamente. para isso acesse o mariadb pela linha de comando do servidor.
+Para criar um usuário 'root' com todas as permissões digite:
+
+    GRANT ALL PRIVILEGES ON *.* TO 'root'@'192.168.3.%' IDENTIFIED BY 'my-new-password' WITH GRANT OPTION;
+
+esse comando irá criar um usuário 'root' que é capaz de conectar no banco de dados pelos hosts de ip 192.168.3.0/24.
+
+______________________________________________________________________________________________________________________________________________________
+Conectar remotamente:
+Para conectar no banco de dados remotamente, utilize o seguinte comando no terminal.
+
+    # mysql -u root -p -h 192.168.3.140
+
+mysql é o binário do banco de dados. -u indica o user_name que será usado. o -p indica um prompt para inserir a senha.
+o -h indica o host_name, o IP do servidor.
+
+______________________________________________________________________________________________________________________________________________________
+Criar um usuário:
+dentro do serviço mariaDB temos como buscar por ajuda digitando: "help" para listar os comandos do client.
+para listar os comandos do servidor digite: "help contents" e depois "help <item>", onde item é a categoria de comandos.
+para criar um usuário vamos usar um comando da categoria de "Account Management":
+
+    CREATE USER 'user_name'@'host_name';
+    ig. CREATE USER 'eryck'@'192.168.3.%';
+    
+user_name é o nome do usuário e host_name é o IP do usuário. % é um wildcard. caso o host_name n seja inserido ele será considerado %, tudo.
+caso o user_name n seja inserido, será criado um perfil anonimo.
+
+______________________________________________________________________________________________________________________________________________________
+Gerenciando um Banco de dados:
+Utilizando o serviço MariaDB, usamos o seguinte comando para criar um banco de dados:
+
+    CREATE DATABASE <name>;
+
+Para selecionar um banco de dados use:
+
+    USE <name>;
+
+Para obter um lista dos bancos da dados, utilize:
+
+    SHOW DATABASES;
+
+Dentro do banco de dados escolhido, crie uma tabela para armazenar dados:
+
+    CREATE TABLE <name> (<COLUMN1> 'type', <COLUMN2> 'type', <COLUMN3> 'type', <COLUMN4> 'type', <COLUMN5> 'type');
+    
+Note que o comando apenas encerra quanto colocamos ';', utilize isso para criar comandos mais complexos e extensos.
+A estrutura de uma tabela é composta por colunas e linhas. as linhas sao adicionadas conforme os dados sao inseridos, mas
+para inserir os dados é necessário que as colunas que irão dividir os dados sejam criadas antes. Por isso que existem os campos de
+colunas no comando de criaçao de uma tabela. os types são os tipos dos dados que serão colocados nas colunas.
+ig.
+    CREATE TABLE books (
+    isbn CHAR(20) PRIMARY KEY, 
+    title VARCHAR(50),
+    author_id INT,
+    publisher_id INT,
+    year_pub CHAR(4),
+    description TEXT );
+    
+ig.
+    CREATE TABLE authors
+    (author_id INT AUTO_INCREMENT PRIMARY KEY,                      //O AUTO_INCREMENT determina que o numero de linhas será aumentado automaticamente
+    name_last VARCHAR(50),                                          // pelo mariaDB.
+    name_first VARCHAR(50),
+    country VARCHAR(50) );
+
+Para exibir os specs de uma tabela digite:
+
+    DISCRIBE <name>;
+    
+Para alterar a configuração de uma tabela utilize:
+
+    ALTER TABLE <name> #####INCOMPLETO######
+
+Para deletar uma tabela junto do seu conteúdo:
+
+    DROP TABLE <name>;
+
+Para adicionar dados dentro de uma tabela:
+
+    INSERT INTO <table_name> 
+    (<columns_name>, <columns_name>, <columns_name>)
+    VALUES('VALUE1','VALUE2','VALUE3')
+    
+Como nao estamos inserindo dados em todas as colunas da tabela, é necessário que coloquemos os nomes das colunas
+que desejamos colocar dados e os seus respectivos valores em ordem.
+ig.
+    INSERT INTO authors
+    (name_last, name_first, country)
+    VALUES('Kafka', 'Franz', 'Czech Republic');
+ig.
+    INSERT INTO books
+    (title, author_id, isbn, year_pub)
+    VALUES('The Castle', '1', '0805211063', '1998');
+ig.
+    INSERT INTO books
+    (title, author_id, isbn, year_pub)                              In this example, we've added three books in one statement. This allows us to give the list of column names once.
+    VALUES('The Trial', '1', '0805210407', '1995'),                 We also give the keyword VALUES only once, followed by a separate set of values for each book, each contained
+    ('The Metamorphosis', '1', '0553213695', '1995'),               in parentheses and separated by commas.
+    ('America', '1', '0805210644', '1995');                     
+
+Alterando e deletando dados:
+Para mudar dados existentes é comum usar o comando UPDATE. quando mudar um dado, tenha certeza de que está alterando
+o dado correto.
+
+    UPDATE <table_name>
+    SET <column_name>
+    WHERE <column_name> = <ROW_VALUE>
+
+This will change the value of the title column for the row specified. We could change the value of other columns for the same row by giving the column = value for each, separated by commas.
+
+Para deletar uma linha de dado usamos o comando DELETE:
+
+    DELETE FROM <table_name>
+    WHERE <column_name> = <VALUE>
+
+Esse comando deleta toda a linha de dados baseado no valor da coluna localizada pelo WHERE. Tenha certeza de que está deletando o dado correto, utilize o comando
+SELECT para localizar o dado e ter certeza do valor inserido ser unico.
+
+Coletando dados:
+Para obter dados usamos o comando SELECT:   #####INCOMPLETO######
+
+    SELECT <column_name>
+    FROM <table_name>;
+    
+Podemos usar o comando select com diversas Clauses, ou parametros, como:
+LIMIT <NUM> : Limita o output das linhas em um valor numérico
+
+JOIN <table_name> USING (<column_name>) : o JOIN é usada para conectar 2 tabelas, mas para isso é necessário que ambas tenham uma coluna em comum 
+ para ser usada para relacionar as 2 tabelas pelo comando USING.
+
+WHERE <column_name> = <VALUE> : Use o WHERE para localizar um valor específico dentro de uma coluna.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
