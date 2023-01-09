@@ -177,11 +177,355 @@ Para obter dados usamos o comando SELECT:   #####INCOMPLETO######
     
 Podemos usar o comando select com diversas Clauses, ou parametros, como:
 LIMIT <NUM> : Limita o output das linhas em um valor numérico
+LIMIT <NUM_inicio>,<NUM_quantidade> : inicia a listagem a partir do NUM_inicio e lista a quantidade de NUM_quantidade.
 
 JOIN <table_name> USING (<column_name>) : o JOIN é usada para conectar 2 tabelas, mas para isso é necessário que ambas tenham uma coluna em comum 
  para ser usada para relacionar as 2 tabelas pelo comando USING.
+JOIN <table_name> ON (<column_name 1 >) = (<column_name 2 >) : Caso os valores das 2 colunas sejam relacionaveis, os mesmos, mas os nomes das colunas sao diferentes
+ é possivel relacionar eles usando o ON.
 
 WHERE <column_name> = <VALUE> : Use o WHERE para localizar um valor específico dentro de uma coluna.
+WHERE <column_name> LIKE <VALUE % > : o LIKE é usado quando n temos certeza do valor exato, por isso tbm usamos o % coringa.
+
+    SELECT title AS 'Kafka Books'
+    FROM books 
+    JOIN authors USING (author_id)
+    WHERE name_last = 'Kafka';
+
+    SELECT isbn, title, 
+    CONCAT(name_first, ' ', name_last) AS author        // CONCAT é um funcao que junta  o valor de 2 colunas em 1 só, ficando mais bonitinho 
+    FROM books                                          // Use o AS para mudar o nome do Header do output.
+    JOIN authors USING (author_id)
+    WHERE name_last = 'Dostoevsky'
+    ORDER BY title ASC                                  // O ORDER BY é uma funcao que coloca em ordem os dados das tabelas. ASC para ascending e DESC para descending.
+    LIMIT 5;
+
+Para obter apenas 1 ocorrencia de um valor que é repetido em uma tabela use:
+    
+    SELECT DISTINCT <table_name>;
+
+Para dar prioridade a funcao SELECT use:
+Normalmente a funcao SELECT tem baixa prioridade, entao em um banco de dados ativo e ocupado é ideal declarar a prioridade.
+
+    SELECT HIGH_PRIORITY <table_name>;
+
+Para determinar o numero total de linhas em uma tabela use:
+
+    SELECT SQL_CALC_FOUND_ROWS <table_name>;
+
+Essa funcao nao ira retornar o numero de linhas, mas ira armazenar o valor em outra funcao a FOUND_ROWS():
+
+    SELECT FOUND_ROWS();
+
+Para mais informaçoes sobre o SELECT visite:
+    https://mariadb.com/kb/en/select/
+______________________________________________________________________________________________________________________________________________________
+Adicionando e alterando dados:
+
+Adicionar dados simpels:
+
+    INSERT <table_name>
+    VALUES ('valor1','valor2','valor3');
+    
+Adicionar dados em determinadas colunas, permite estar fora de ordem:
+
+    INSERT INTO <table_name>
+    (coluna1,coluna2,coluna3)
+    VALUES ('valor1','valor2','valor3');
+    
+Prioridade:
+O INSERT tem maior prioridade do que um request de leitura, como SELECT. Um INSERT irá travar a tabela e forçar outros clientes a 
+esperar até que termine o seu processo. Para evitar que um servidor ocupado crie delays nas açoes dos clientes defina o scrit do 
+INSERT para, flag, LOW_PRIORITY:
+
+    INSERT LOW_PRIORITY
+    INTO table1
+    VALUES('text1','text2','text3');
+
+Também podemos usar a flag DELAYED, mas n é recomendado por problemas com a sua operaçao
+
+Podemos usar a funcao INSERT e SELECT juntas para interagir com tabelas diferentes, ou até banco de dados diferentes.\
+para usar eles juntos basta seguir o molde:
+
+    INSERT INTO <TABLE 1>
+    (coluna 1, coluna 2)
+    SELECT <COLUMN 1>, <COLUMN 2>
+    FROM <base de dados>;
+
+    INSERT INTO company.printing                // podemos acessar outros banco de dados e tabelas usando a sintaxe:
+    (name, lastname)                            // <DataBase.Table>. ig. company.printing
+    SELECT name_first, name_last 
+    FROM authors;
+
+Para trocar o valor de uma linha use a funcao REPLACE ao inves de INSERT:
+O REPLACE funciona exatamento como o INSERT, com os mesmo parametros, clauses, e flags.
+O REPLACE deleta os dados de uma linha e depois escreve o novo valor.
+
+    REPLACE INTO <table_name>
+    (coluna 1, coluna 2)
+    VALUES ('valor1','valor2','valor3'),
+    ('valor1','valor2','valor3'),
+    ('valor1','valor2','valor3');
+
+    REPLACE LOW_PRIORITY
+    INTO table2 (id, col1, col2)
+    VALUES('id1','text','text'),
+    ('id2','text','text'),
+    ('id3','text','text');
+
+Para realizar mudanças ou atualizar sem alterar toda a linha de dados, apenas algumas colunas, use a funcao UPDATE:
+
+    UPDATE [flag] <table_name>
+    SET col1 = 'text1', col3 = 'text3';
+
+Note que a funcao UPDATE permite utilizar o valor atual da coluna para atualizar a mesma coluna, ou seja, o valor
+pode ser atualizado com base no valor anterior.  
+O UPDATE também pode ser usado com a funcao de ORDER BY para alterar a ordem em que os dados sao atualizados.
+
+    UPDATE LOW_PRIORITY table3
+    SET col1='text-a', col2='text-b'
+    WHERE id < 100
+    ORDER BY col3 DESC
+    LIMIT 10;
+
+Também podemos utilizar 2 tabelas e usar o UPDATE para atualizar o valor de uma baseado na outra.
+
+    UPDATE table3, table4
+    SET table3.col1 = table4.col1
+    WHERE table3.id = table4.id;
+
+No exemplo os valores de table3.col1 serão igualados aos valores de table4.col1 quando o valor de table3.id e table4.id forem iguais.
+ORDER BY E LIMIT não podem ser usados com multiplas tabelas na funcao UPDATE
+
+ON DUPLICATE KEY UPDATE:
+Neste codigo apenas sera atualizado as linhas que ja existirem e forem repetidas pelas novas entries. O resto é um insert normal que ignora erros. IGNORE.
+
+    INSERT IGNORE INTO table1 
+    (id, col1, col2, status) 
+    VALUES('1012','text','text','new'),
+    ('1025,'text','text','new'),
+    ('1030,'text','text','new')
+    ON DUPLICATE KEY 
+    UPDATE status = 'old';
+    
+______________________________________________________________________________________________________________________________________________________
+Alterando tabelas:
+
+Antes de alterar qualquer tabela, convém realizar o backup dos dados. para isso use a ferramenta mysqldump:
+
+    mysqldump --user='username' --password='password' --add-locks db1 clients > clients.sql
+
+As you can see, the username and password are given on the first line. On the next line, the --add-locks option is used to lock the table before backing up 
+and to unlock automatically it when the backup is finished. On the third line above, the database name is given, followed by the table name. The redirect 
+(i.e., >) tells the shell to send the results of the dump to a text file called clients.sql in the current directory.
+
+Para recuperar um backup feito pelo mysqldump use:
+
+    mysql --user='username' --password='password' db1 < clients.sql
+    
+Para adicionar uma coluna a uma tabela existente utilize ALTER TABLE:
+
+    ALTER TABLE <table_name>
+    ADD COLUMN <column_name> <type(quantidade)>;
+    
+    ALTER TABLE clients 
+    ADD COLUMN status CHAR(2);
+
+Para adicionar uma coluna em um determinado local, por exemplo depois de uma certa coluna, adicione AFTER no final do comando
+Para adcionar uma coluna na primeira posiçao utilize FIRST
+
+    ALTER TABLE <table_name>
+    ADD COLUMN <column_name> <type(quantidade)>
+    AFTER <column_name>;
+
+Para alterar o nome e o tipo de uma coluna use a clause CHANGE:
+
+    ALTER TABLE <table_name>
+    CHANGE <column_name><new_column_name> <new_type>
+    
+    ALTER TABLE clients 
+    CHANGE status status enum('AC','IA');
+    
+Note que no exemplo o nome nao foi alterado, apenas o tipo, mas quando usamos o CHANGE é necessário colocar todos os dados, até mesmo aqueles que não serão alterados.
+O CHANGE pode ser usado para modificar os nomes e os tipos das colunas, mas caso apenas queira alterar o tipo da coluna sem ter que usar o CHANGE, use o MODIFY:
+
+    ALTER TABLE <table_name>
+    MODIFY <column_name> <new_type>
+    
+Para deletar uma coluna e todos os seus dados utilize DROP:
+    
+    ALTER TABLE <table_name>
+    DROP <column_name>
+    
+Para alterar o valor DEFAULT(padrão) das colunas de 'NULL' para outro valor use:
+    
+    ALTER TABLE <table_name>
+    ALTER <column_name> SET DEFAULT '<value>';
+
+Para voltar atras e remover o valor de DEFAULT use:
+esse drop n deleta dados.
+    ALTER TABLE <table_name>
+    ALTER <column_name> DROP DEFAULT;
+    
+As vezes o INDEX de uma coluna pode entrar no caminho e atrapalhar algumas alteraçoes.
+Para resolver problemas com o INDEX é necessário, primeiro, deletar o index, fazer as alteraçoes desejadas e depois
+atribuir o index de volta. para isso siga o molde:
+    
+    ALTER TABLE clients
+    DROP <INDEX>
+    CHANGE <column_name> <new_column_name>
+    <type> <INDEX>
+    
+    ALTER TABLE clients
+    DROP PRIMARY KEY,
+    CHANGE cust_id client_id 
+    INT PRIMARY KEY;
+
+    para mais informaçoes visite: https://mariadb.com/kb/en/altering-tables-in-mariadb/
+
+Para renomear uma tabela use:
+
+    RENAME TABLE <table_name>
+    TO <new_table_name>;
+    
+O RENAME TABLE também permite que vc mova a tabela de banco de dados
+    
+    RENAME TABLE <table_name>
+    TO DataBaseName.table_name;
+    
+Podemos usar o ALTER TABLE para atribuir uma caracteristica permanente para uma tabela, como por exemplo
+um ORDER BY permanente.
+eg.
+    ALTER TABLE client_addresses
+    ORDER BY city, name;
+______________________________________________________________________________________________________________________________________________________
+Gerenciamento de data e hora:
+
+No MariaDB existem os tipos de dados 'date','time' e 'datetime'. 
+O layout de date é yyyy-mm-dd. o layout de time é hh-mm-ss.
+
+O MariaDB oferece funcoes capazes de obter a data e horário atual.
+para data: CURDATE()
+para hora: CURTIME()
+para obter os 2 juntos: NOW(), SYSDATE()
+
+O mariaDB também oferece maneiras de obter determinado dado dentro dos moldes de data e hora. ou seja,
+caso queira obter apenas o dia de uma data, é possível.
+para dia: DAYOFMONTH(table_name)
+para mes: MONTH(table_name)
+para ano: YEAR(table_name)
+para um dia da semana: DAYOFWEEK(table_name) - DAYOFWEEK é baseado em numeros, sendo 0 domingo e 6 sabado.
+
+para hora: HOUR(table_name)
+para minuto: MINUTE(table_name)
+para segundo: SECOND(table_name)
+
+Para obter os dados acima de uma coluna com o tipo de dado datatime, os 2 combinados,
+podemos usar a funcao EXTRACT(parametro FROM table_name) junto de alguns parametros extras para especificar o que 
+precisamos, como: HOUR, MINUTE, SECOND; YEAR, MONTH, DAY.
+Com o EXTRACT() podemos também pegar dados em conjunto, como por exemplo: 
+DAY_HOUR, DAY_MINUTE, DAY_SECOND
+HOUR_MINUTE, HOUR_SECOND, MINUTE_SECOND
+
+NAO TEM MONTH_DAY
+
+O EXTRACT() nao é tao bonito, mas cumpre o que é pedido com exito. Para um output mais legivel
+use DATE_FORMAT() E TIME_FORMAT.
+
+Podemos também obter os nomes dos dias e meses com as funcoes MONTHNAME() e DAYNAME().
+
+o DATE_FORMAT(table_name, 'options and text') é mais simples de usar e com mais opçoes, 
+possibilitando também o uso de texto em meio as opcoes. As opçoes sao:
+%W para nome do dia da semana
+%M para nome do meses
+%e ou %d para o numero do dia
+%Y para o ano
+Para mais opcoes visite: https://mariadb.com/kb/en/doing-time-with-mariadb/#how-to-get-a-date
+
+O TIME_FORMAT(table_name, 'options and text') funciona como o DATE_FORMAT, apenas com opcoes diferentes relacionadas ao tempo.
+%l para hora entre 01 e 12
+%p para indicar AM / PM
+%i para indicar minutos
+
+o layout do output é o mesmo de CURDATE().
+
+______________________________________________________________________________________________________________________________________________________
+Importar dados para dentro do MariaDB:
+
+    LOAD DATA INFILE '/tmp/prospects.txt'
+    INTO TABLE prospect_contact
+    FIELDS TERMINATED BY '|';
+    
+mais detalhes https://mariadb.com/kb/en/importing-data-into-mariadb/
+
+exemplo de um import feito pela linha de comando usando mysqlimport, usado em scripts
+
+    mysqlimport --user='marie_dyer' --password='angelle1207' \
+    --fields-terminated-by=0x09 --lines-terminated-by=0x0d0a \
+    --replace --low-priority --fields-enclosed-by='"' \
+    --fields-escaped-by='#' --ignore-lines='1' --verbose \
+    --columns='name_last, name_first, telephone' \
+    sales_dept '/tmp/prospect_contact.txt'
+
+a ordem dos parametros nao importam, apenas é necessário que o nome do banco de dados e o nome do arquivo fiquem no final
+o nome da tabela criada será o mesmo nome do arquivo, sem a extensao.
+
+______________________________________________________________________________________________________________________________________________________
+Formatando strings:
+Mais informaçoes https://mariadb.com/kb/en/mariadb-string-functions/
+
+CONCAT(col1, col2, col3) : Concatena os valores das colunas especificadas e caracteres
+CONCAT_WS('|', col1, col2, col3) : Concatena os valores com um caractere entre cada coluna
+FORMAT(col1, 2) : Formata os valores obtidos para decimal usando virgula, ou seja, 1000000 se torna 1,000,000. O numero que segue a coluna 
+                  especifica a quantidade de numeros decimais depois do numero inteiro.
+UCASE(col1) e LCASE(col2) : Tranforma o output para UpperCASE  e LowerCASE.
+LPAD(col1, quant, char) e RPAD(col2, quant, char) : Adiciona caracteres a esquerda ou a direita, respectivamente.
+LTRIM(), RTRIM() e TRIM(TRAILING/LEADING/BOTH char FROM col1) : Servem para remover caracteres em exesso. um a esquerda, um a direita e outro dos dois.
+
+LEFT(col1, num) E RIGHT(col2, num) : Usados para extrair partes dos dados. O LEFT extrai os dados a partir da esquerda, e o RIGHT da direita.
+SUBSTRING(col1,num1,num2) : usado para extrair uma determinada parte de uma coluna a partir de uma posiçao num1 até a outra num2. MID() funciona igual.
+
+REPLACE(col1, value1, value2) : Troca o value1 pelo value2 da coluna, pode ser usado apenas no output ou em conjunto com um INSERT. Note que o REPLACE irá
+                                trocar todo o valor dentro de um campo.
+LOCATE(col1, value) : Usado para localizar dentro de uma coluna ocorrencias do valor dado, caso encontre ele retorna a posiçao encontrada. 
+REPEAT(col1, num1) : repete o valor da coluna em num vezes.
+REVERSE (string/col) : inverte a string
+
+CHAR_LENGTH() : usado para contar o tamanho das strings das colunas.
+    
+______________________________________________________________________________________________________________________________________________________
+Restaurar dados a partir de Dump Files:
+
+Uma Dump file obtida a partir do comando 'mysqldump' é composta por uma sequencia de comandos que serao executados dentro do banco de dados
+para restaurar os dados. A Dump File na verdade refaz todas os bancos de dados, suas tabelas e seus dados. Olhe dentro de uma dump file para entender.
+
+O comando para criar uma dump file é a seguinte:
+
+    mysqldump --user='username' --password='password' --add-locks database table > filename.sql
+
+Para restaurar um backup de dump file:
+
+    mysqldump --user='username' --password='password' database(optional) < filename.sql
+
+A restauracao é feita a partir do dump file sendo enviado para o mysql pelo STDIN (<).
+Caso ocorra de existir um backup do banco de dados inteiro, mas vc deseja apenas recuperar 1 tabela sem ter que executar o dump file por completo,
+comprometendo os outros bancos de dados, é possível criar um perfil de usuário temporário para aquela tabela especifica com apenas algumas permissoes
+suficientes para executar apenas a parte do dump file que ele tem permissao. para isso:
+
+    GRANT SELECT ON database.* 
+    TO 'user_name'@'localhost' 
+    IDENTIFIED BY 'password';
+    
+    GRANT LOCK DATABASE ON database.* 
+    TO 'user_name'@'localhost' 
+    IDENTIFIED BY 'password';
+    
+    GRANT ALL ON database.table
+    TO 'user_name'@'localhost';
+    
+Os comandos acima irao garantir que o usuário temporario tenha apenas as permissoes de acessar o banco de dados e a tabela permitida. assim
+quando o dump file for executado ocorrerá vários erros devido a falta de permissao, mas usando a tag --force ele irá ignorar os erros e executar
+o que tiver permissao, ou seja, apenas a da tabela que se deseja restaurar.
 
 
 
