@@ -1,0 +1,126 @@
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Desafio
+- Download da versão 11 do GNU/Linux Debian, Google é o seu amigo;
+- Criar uma máquina virtual com um disco rígido de 20GB;
+- Durante o particionamento do disco rígido escolher a opção "Manual";
+- Particionar o disco rígido da seguinte forma:
+    - / - ext4 - 5GB
+    - /var - ext4 - 2GB
+    - /tmp - ext4 - 1GB
+    - /home - ext4 - 5GB
+- Como vocês podem perceber, temos dois problemas:
+    - Não foi criado a partição de swap
+    - Sobrou espaço no disco rígido
+Primeira parte do desafio
+    - Criar a partição de swap utilizando o aplicativo "fdisk";
+    - Ativar a partição de swap nessa nova partição;
+    - Tornar a partição permanente alterando o arquivo PIPI-POPO. Utilizar UUID
+    no arquivo PIPI-POPO;
+Segunda parte do desafio
+    - Criar uma nova partição, utilizando o fdisk, e move a partição /home para essa nova partição;
+
+eryck.ehs@gmail.com - Eryck Henrique Santos
+    
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Criação do swap:
+    
+    comandos em ordem:
+    #sudo fdisk ;
+        dentro do fdisk
+    #m ; para listar o help.
+    #n ; criar uma nova partição.
+    #3 ; terceira parte primaria.
+    #[enter] ; pressione enter para selecionar o setor desde o inicio.
+    #+2GB ; coloque o tamanho do setor.
+    #l ; pressione l para ver o numero hex dos tipos partição
+    #t ; digite t para mudar o tipo da partição.
+    #3 ; selecione a partição que irá alterar o type
+    #82 ; digite o valor hex do swap - 82.
+    #p ; digite p para conferir se está tudo de acordo
+    #w ; para escrever as mudanças em disco e salvar.
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Ativando o swap:
+    
+    com a partição feita podemos formata-la como swap. para isso use:
+    
+    #mkswap /dev/sda3
+    
+    depois de formatado precisamos ativar o swap, para isso use:
+    
+    #swapon /dev/sda3
+    
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Configuração do /etc/fstab:
+    
+    Antes de configurar o arquivo /etc/fstab precisamos do UUID da partição /dev/sda3. para isso digite:
+    
+    #sudo blkid /dev/sda3
+    
+    esse comando irá dar um identificador universal desse dispositivo. Podemos enviar esse identificador para o arquivo /etc/fstab para facilitar a configuração
+    
+    #sudo blkid /dev/sda3 >> /etc/fstab
+    
+    agora podemos abrir o arquivo /etc/fstab e modifica-lo
+    
+    #sudo nano /etc/fstab 
+
+    dentro do arquivo precisamos colocar a seguinte linha:
+    UUID= <resultado do blkid> none swap sw 0 0
+    
+    essa linha especifica o identificador do dispositivo (UUID), o local de montagem (none), a formatação (swap), opções (defaults), dump (0 desativa), prioridade (0)
+        
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Nova partição /home:
+    
+    Primeiro devemos criar uma nova partição onde o novo /home ficará, para isso execute o fdisk e crie uma nova partição usando o espaço livre,
+    
+    #n ; crie uma nova partição
+    #p ; usar um slot primario
+    #[enter] ; seleciona o ultimo slot primario
+    #[enter] ; seleciona o inicio do setor
+    #[enter] ; seleciona o final do setor como o espaço livre total 
+    #w : escreve as mudanças em disco  
+    
+    é necessário formatar o dispositivo utilizando o mkfs.
+    
+    # mkfs.ext4 /dev/sda4
+    
+    proximo nós devemos criar um diretório para montar essa nova partição
+    
+    # sudo mkdir /mnt/home_new
+    # sudo mount /dev/sda4 /mnt/home_new
+    
+    em seguida iremos mover o conteúdo atual de /home para /mnt/home_new temporariamente
+    
+    # sudo cp -aR /home/* /mnt/home_new
+    
+    depois, podemos desmontar o /mnt/home_new para montar no dispositivo /dev/sda4 o /home original. mas antes precisamos limpar o diretório /home
+    
+    # rm -rf /home/*
+    # umount /mnt/home_new
+    # mount /dev/sda4 /home
+    
+    rode o comando df -h para conferir se tudo ocorreu corretamente.
+    
+    essas mudanças irão desaparecer quando reiniciar a máquina, portanto precisamos configurar o arquivo /etc/fstab. Antes de configurar o arquivo 
+    /etc/fstab precisamos do UUID da partição /dev/sda4. para isso digite:
+    
+    #sudo blkid /dev/sda4 >> /etc/fstab
+    
+    agora podemos abrir o arquivo /etc/fstab e modifica-lo
+    
+    #sudo nano /etc/fstab 
+
+    dentro do arquivo precisamos colocar a seguinte linha:
+    UUID= <resultado do blkid>  /home ext4 defaults 0 2
+    
+    Não se esqueça de excluir a linha que indica a montagem do /home na partição que a instalação foi feita.
+    
+    vale a pena conferir se o arquivo /etc/fstab está funcionando corretamente, para isso desmonte o dispositivo e digite 'mount -a'. isso fará com que todos
+    os dispositivos dentro de /etc/fstab sejam montados de acordo com esse arquivo
+    
+    enjoy!!
+    
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

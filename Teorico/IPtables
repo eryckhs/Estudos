@@ -1,0 +1,257 @@
+-----------------------------------------------------------------------------------------------------------------------------------------
+Teoria:
+    O iptables é um firewall em NÍVEL DE PACOTES e funciona baseado no endereço/porta de origem/destino
+    do pacote, prioridade, etc. Ele funciona através da comparação de regras para saber se um pacote tem ou
+    não permissão para passar.
+    
+    Tabelas:
+    
+    Tabelas são os locais usados para armazenar os chains e conjunto de regras com uma determinada característica em comum.
+    • filter - Esta é a tabela padrão, contém 3 chains padrões:
+        
+        • INPUT - Consultado para dados que chegam a máquina
+        • OUTPUT - Consultado para dados que saem da máquina
+        • FORWARD - Consultado para dados que são redirecionados para outra interface de rede ou outra
+        máquina.
+        Os chains INPUT e OUTPUT somente são atravessados por conexões indo/se originando de localhost.
+        OBS: Para conexões locais, somente os chains INPUT e OUTPUT são consultados na tabela filter.
+    
+    • nat - Usada para dados que gera outra conexão (masquerading, source nat, destination nat, port
+    forwarding, proxy transparente são alguns exemplos). Possui 3 chains padrões:
+    
+        • PREROUTING - Consultado quando os pacotes precisam ser modificados logo que chegam. É o chain
+        ideal para realização de DNAT e redirecionamento de portas (“Fazendo DNAT”).
+        • OUTPUT - Consultado quando os pacotes gerados localmente precisam ser modificados antes de
+        serem roteados. Este chain somente é consultado para conexões que se originam de IPs de interfaces
+        locais.
+        • POSTROUTING - Consultado quando os pacotes precisam ser modificados após o tratamento de
+        roteamento. É o chain ideal para realização de SNAT e IP Masquerading (“Fazendo SNAT”).
+    
+    • mangle - Utilizada para alterações especiais de pacotes (como modificar o tipo de serviço (TOS) ou
+    outros detalhes que serão explicados no decorrer do capítulo. Possui 2 chains padrões:
+        
+        • INPUT - Consultado quando os pacotes precisam ser modificados antes de serem enviados para o
+        chain INPUT da tabela filter.
+        • FORWARD - Consultado quando os pacotes precisam ser modificados antes de serem enviados para
+        o chain FORWARD da tabela filter.
+        • PREROUTING - Consultado quando os pacotes precisam ser modificados antes de ser enviados para
+        o chain PREROUTING da tabela nat.
+        • POSTROUTING - Consultado quando os pacotes precisam ser modificados antes de serem enviados
+        para o chain POSTROUTING da tabela nat.
+        • OUTPUT - Consultado quando os pacotes precisam ser modificados antes de serem enviados para o
+        chain OUTPUT da tabela nat.
+
+    Chains: 
+    
+    Os Chains são locais onde as regras do firewall definidas pelo usuário são armazenadas para operação do
+    firewall. Existem dois tipos de chains: os embutidos (como os chains INPUT, OUTPUT e FORWARD) e
+    os criados pelo usuário.
+    
+    Regras:
+    
+    As regras são como comandos passados ao iptables para que ele realize uma determinada ação, elas são armazenadas dentro 
+    dos chains e processadas na ordem que são inseridas.
+
+    
+    
+-----------------------------------------------------------------------------------------------------------------------------------------
+Manipulando Regras em Chains:
+    
+    -A anexa a regra no final da cadeia especificada
+        iptables -t filter -A INPUT -d 127.0.0.1 -j DROP
+
+    -F apaga todas as regras na cadeia especificada
+        iptables [-t tabela] [-F chain]
+
+    -L lista todas as regras da cadeia
+        iptables [-t tabela] -L [chain] [opções]
+
+    -N cria uma nova cadeia com o nome desejado
+        iptables -t filter -N internet
+
+    -P configura a politica padrão da cadeia
+        iptables [-t tabela] [-P chain] [ACCEPT/DROP]
+
+    -D apaga uma regra em uma posição na cadeia
+        iptables -t filter -D INPUT 1
+
+    -X exclui uma cadeia vazia
+        iptables [-t tabela] [-X chain]
+
+    -I insere uma regra em uma posição na cadeia
+        iptables -t filter -I INPUT 1 -s 192.168.1.15 -d 127.0.0.1 -j ACCEPT
+        
+    -E renomear uma chain criada pelo usuário
+        iptables -t filter -E chain-antigo novo-chain
+
+    -Z zera o contador de byts dos chains
+        iptables [-t tabela] [-Z chain] [-L]
+
+    -R subistitui uma regra
+        iptables -R INPUT 2 -d 127.0.0.1 -p icmp -j DROP
+    
+    -s indica o IP de origem (source)
+        iptables -A INPUT -s 200.200.200.0/24 -j DROP
+
+    -d indica o IP de destino 
+        iptables -A OUTPUT -d 10.1.2.3 -j DROP
+    
+    -i indica a interface de INPUT/origem
+        iptables -A INPUT -s 200.123.123.10 -i ppp0 -j DROP
+
+    -o indica a interface de OUTPUT/destino
+        iptables -A OUTPUT -o ppp+ -j DROP
+    
+    -p é usado para especificar protocolos (tcp,udp,icmp)
+        iptables -A INPUT -s 200.200.200.200 -p udp -j DROP
+    
+    -f permite especificar regras que confiram com fragmentos (uma pacote grande dividido em fragmentos)
+        iptables -A INPUT -s 200.200.200.1 -f -j DROP
+
+    use ! antes de um parametro para indicar uma exceção
+        iptables -t filter -A INPUT ! -s 200.200.200.10 -j DROP (Diz para rejeitar todos os pacotes EXCETO os que vem do endereço 200.200.200.10)
+
+
+    
+-----------------------------------------------------------------------------------------------------------------------------------------
+Targets (ações):
+    
+    ACCEPT – O pacote é permitido
+
+    DROP – Descartar o pacote
+
+    QUEUE – Enviar o pacote ao userspace (código fora do kernel)
+
+    RETURN – Descontinuar o processamento do pacote e aplicar a regra padrão a ele.
+
+    Ações adicionais:
+
+    REJECT – Descarta o pacote e envia feedback ao remetente.
+
+    DNAT – reescreve endereço de destino (NAT)
+
+    SNAT – reescreve endereço de origem (NAT)
+
+    LOG – coloca no log informações sobre o pacote
+    
+    
+    
+    
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+Parametros:
+    
+    -t tabela       Especificar a tabela (filter é a padrão)
+    -j ação	        Realiza a ação especificada
+    -p protocolo	Especifica o protocolo (icmp, tcp, udp, all)
+    -s IP           IP de origem do pacote
+    -d IP	        IP de destino do pacote
+    -i interface	Nome da interface de rede de entrada do pacote
+    -o interface	Nome da interface de rede de saída do pacote
+    –sport portas	Portas de origem
+    –dport portas	Portas de destino
+    –syn	        Identifica nova requisição de conexão
+    –icmp-type	    tipo de mensagem ICMP
+    
+    
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+Protocolos: 
+    
+    --source-port ou -sport Especifica uma porta ou faixa de portas de origem
+    
+    --destination-port ou -dport Especifica uma porta ou faixa de portas de destino.
+    
+    ICMP:
+    iptables -A INPUT -s 200.123.123.10 -p icmp --icmp-type time-exceeded -i ppp+ -j DROP
+    
+    A regra acima rejeitará mensagens ICMP do tipo "time-exceeded" que venham do endereço 200.123.123.10 através da interface ppp+.
+    Os tipos de mensagens ICMP podem ser obtidos com o comando iptables -p icmp -h
+    
+    syn:
+    Pacotes syn são usados para iniciarem uma conexão, o uso da opção --syn serve para especificar estes tipos de pacotes. Desta maneira é 
+    possível bloquear somente os pacotes que iniciam uma conexão, sem afetar os pacotes restantes. Para que uma conexão ocorra é necessário 
+    que a máquina obtenha a resposta a pacotes syn enviados, caso ele seja bloqueado a resposta nunca será retornada e a conexão não será 
+    estabelecida.
+
+    iptables -A INPUT -p tcp --syn --dport 23 -i ppp+ -j DROP
+
+    A regra acima bloqueia (-j DROP) qualquer tentativa de conexão (--syn) vindas da interface ppp+ ao telnet (--dport 23) da máquina local, 
+    conexões já efetuadas ão são afetadas por esta regra. A opção --syn somente pode ser especificada para o protocolo tcp.
+
+    
+    
+    
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+
+Iptabes pode também ser usado para gerenciar o tráfego de mensagens entre processos dentro do proprio servidor, não necessáriamente um 
+trafego que sai e entra, mas sim um trafego local
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
