@@ -173,3 +173,14 @@ Testing Replication:
 Access a node, write some data, create some tables and databases and check if they are being shared correctly.
 if not, good luck solving it :3
 ----------------------------------------------------------------------------------------------------------------------
+What to do AFTER closing all nodes:
+
+MariaDB and galera cluster have a way to ensure data loss prevention by not allowing your nodes to bootup in the wrong 
+order. When all of your nodes get shutdown you have to start galera cluster on the last node to shutdown.
+if you dont remember the last one, just try booting up each one with: galera_new_cluster and the right one will work.
+This is safe to do because there is a configuration in /var/lib/mysql/grastate.dat file, called bootstrap, that prevents
+the wrong node from starting
+
+
+----------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------
