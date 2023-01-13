@@ -181,6 +181,7 @@ if you dont remember the last one, just try booting up each one with: galera_new
 This is safe to do because there is a configuration in /var/lib/mysql/grastate.dat file, called bootstrap, that prevents
 the wrong node from starting
 
+ALWAYS, ALWAYS CHECK THE LOGS!
 
 ----------------------------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------------------------
