@@ -1,0 +1,173 @@
+Noted
+
+head -c[Nbytes] -n [Nlinhas] [arq] - lista as 10 primeiras linhas de um arquivo/diretório
+tail -n [Nlinhas] -f [aovivo] [arq] - lista as 10 ultimas linhas de um arquivo/diretório
+tac [arq] - Lê um arquivo de forma inversa, de baixo para cima
+wc -c [caract] -l [linhas] -w [words] [arq] - word count, conta a quantidade de linhas, caracteres e palavras de um arquivo.
+split [options] [arq1] [arq_dividido+(XX)] - divide um arquivo em varias partes em uma sucessão de arquivos com finais aa,ab,ac...
+    -l=n - numero de linhas / -b=n - numero d bytes ;  cada um por arquivo
+cat [arq1] [arq2] [arq3] [arqN] > arq_end - concatena, junta, todos os arquivos em 1 só (use coringas para facilitar a sua vida)
+    # cat pass-* > passwd-2
+sort [options] [arq] - organiza os dados
+    -n numericamente / -r ordem reversa / 'nada' numericamente/alfabeticamente
+touch [options] [nome] - permite alterar a data e hora de modificação e acesso de um arquivo. tbm cria um arquivo vazio
+    -a hora de acesso / -m hora de modificação / -t YYMMDDhhmmss data e hora desejada.
+cut [options] [arq] - Corta campos e colunas de cada linha de um arquivo.
+    -c[n] numero coluna do caractere (cada caractere fica em uma coluna) / -f[n] numero do campo / -d[d] delimitador, para espaço use (' ')
+ls [options] [diretório]- lista o conteúdo de um diretório
+    -a exibe arquivos ocultos / -l descrição longa, exibe os metadados / -i mostas od numeros dos inodes / -o listagem longa apenas com o owner / - r reverso
+pwd - present working directory
+uniq [options] [arq] - escreve um arquivo eliminando linhas repetidas adjacentes. use o sort para organizar o arquivo para que as duplicatas fiquem adjacentes.
+    -d processa apenas o que se repete / -u processa apenas o que n se repete / -c conta as repetições
+
+caso queria usar comandos em sequencia, divida eles com um ';'. caso queira enviar o resultado de um comando para outro processar use o pipe '|'.
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Permissões:
+    
+    drwxrwxr-x 2 eryck eryck genshin_impact.r.ganyu.34
+    
+    no exemplo de arquivo acima o primeiro caracter indica se ele é um diretório ou um arquivo.
+    nos proximos 3 caracteres indicam as permissões do usuário. nos proximos 3 são as permissões de grupo. e os 3 ultimos são as permissões de outros, aqueles que 
+    não são nem o usuário e nem pertenem ao grupo.
+    
+    nós usamos o comando 'chmod' para alterar as permissões de um arquivo. use u+rwx, g+rwx e o+rwx para adicionar as permissões de read, write e execute para u(suários),
+    g(roups) e o(ther). para otimizar esse processo podemos usar valores numéricos, eles são: r=4, w=2, x=1. usamos a soma deles para atribuir a quantidade desejada 
+    de permissões, ou seja, quando usamos chmod 764 [file] basicamente estamos fazendo chmod u+rwx g+rw o+r.
+    
+    # sudo chmod 654 /home/ganyu
+    
+    podemos adicionar a opção recursiva -R para alterar todos os arquivos dentro de um diretório, mas esse comando também irá alterar as permissões do diretório então
+    não é muito usual. para mudar todas as permissões dos arquivos dentro de um diretório usamos caracteres coringa para puxar todos os arquivos, ou seja, 
+    'chmod 600 [diretório]/*'.
+    também podemos usar o comando 'find' para encontrar os arquivos que queremos e usar a opção '-exec chmod xxx {} +' para alterar as permissões do que queremos.
+    
+    para mudar o dono de um arquivo/diretório usamos o comando 'chown' (change ownership). usamos as opções -R para mudar o diretório e todos os arquivos abaixo dele.
+    podemos usar o 'chown' para mudar o grupo de acesso junto com o seu dono, adicione ':group' após o nome do novo dono para fazer isso.
+    sua sintaxe é: sudo chown -R [owner:group] [dietório/arquivo].
+    
+    # sudo chown ganyu:qilin /genshin
+    
+    use o comando ghgrp para mudar o grupo sem ter permissões de superusuário.
+    
+    # chgrp qilin /genshin
+    
+    o comando umask determina o padrão de permissões dos arquvos e diretórios que serão criados no seu sistema. use 'umask xxx' para determinar os níveis de permissão.
+    o comando umask apenas funciona para novo arquivos, use o chmod para modificar arquivos existentes.
+    
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+APT:
+    
+    O arquivo /etc//apt/sources.list contém as fontes de onde o comando 'APT' obterá os pacotes. Sempre que esse arquivo for editado, é necessário rodar o comando 
+    'sudo apt update'. Caso vc queira bastante usar um 'cdrom', adicione a mídia ao computador e use o comando 'apt-cdrom add'.
+    
+    Opções mais usadas:
+    # apt-get clean - apaga todos os pacotes baixado e ja instalados
+    # apt-get - autoclean apaga todos os pacotes que não podem ser mais baixados
+    # apt-get autoremove - remove pacotes orfãos, dependencias de softwares ja removidos
+    # apt-get -d - apenas faz o download, mas n instala 
+    # apt-get -f install - verifica lista de dependencias quebradas e tenta corrigi-las
+    # apt-get remove [pacote] - remove pacotes
+    # apt-get --purge remove [pacote] - remove os pacotes e suas configurações
+    # apt full-upgrade atualiza tudo que puder com base no arquivo de repositório.
+    # apt install --without-recomends / -no-install-recomends - não instala as dependencias de um pacote.
+    # apt upgrade --without-new-pkgs - atualiza só o que está no sistema
+    # apt update -y - vai dar yes em tudo
+    
+    O apt-cache é usado para manipular e obter informações sobre os pacotes no cache do apt.
+    
+    # apt-cache pkgnames - mostra os nomes dos pacotes no cache 
+    # apt-cache dump - lista todos os pacotes instalados 
+    # apt-cache stats - estatísticas basicas dos pacotes
+    # apt-cache search [palavra-chave] - mostra todos os pacotes relacionados com a palavra chave
+    # apt-cache show [pacote] - mostra uma breve descrição sobre um pacote
+    # apt-cache showpkg [pacote] - mostra uma descrição completa do pacote
+    # apt-cache depends [pacote] - mostra as dependencias do pacote
+    
+    
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+init e runlevel:
+    
+    A inicialização do sistema ocorre a partir do script armazenado em /etc/inittab
+    
+    Runlevels são níveis de execução e eles especificam as diferentes formas que um sistema pode ser utilizado e o controle sobre quias serviços rodarão.
+    O processo init é responsável por levar o sistema ao runlevel padrão.
+    O sistema operacional é composto por scripts que rodam em diferentes runlevel e determinam como o sistema irá se comportar. o diretório /etc/init.d contém
+    os scripts de inicialização e encerramento de cada serviço do sistema. Os scripts presentes nesse diretório não são executados diretamente, mas através de 
+    links simbólicos armazenados em /etc/rc0.d até /etc/rc6.d (vai de 0 a 6).
+    o runlevel 0 desliga a maquina e o 6 reinicia.
+    
+    Mudar runlevel: 
+    
+    # telinit [N_runlevel] - aplica as mudanças em /etc/inittab
+    # init [num]
+    # runlevel - exibe o runlevel previo e atual
+    
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Monitoramento:
+    
+    Use as ferramentas 'top';'uptime';'vmstat';'free';'iostat';'dstat'; para monitorar o seu sistema. o dstat é o mais completo.
+    
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Gerenciamento de usuários e grupos:
+    
+    adduser [options] nome - cria uma nova conta de usuário
+    
+    passwd [options] - o comando passwd serve para alterar a senha de um usuário, mas também serve para gerenciar as senhas de outros usuários.
+        -l trava a senha de uma conta
+        -u destrava a senha da conta especificada
+        -d exclui a senha de um usuário
+        -e força a expiração de uma senha
+        -x 'dias' faz com que a senha funcione apenas na quantidade de dias especificado
+        -n 'dias' quantidade minima de dias que o usuário precisa aguardar para trocar a sua senha
+        -w 'dias' para o usuário ser notificado da expiração da senha
+    
+    gpasswd [options] grupo - usado para administrar grupos. grava suas informações nos arquivos /etc/group e /etc/gshadow
+        gpasswd grupo - cria ou altera senha do grupo
+        gpasswd -a usuário grupo - adiciona usuário ao grupo
+        gpasswd -d usuário grupo - remove usuário do grupo
+        gpasswd -A usuário grupo - torna usuário administrador do grupo
+    
+    usermod [options] usuário - gerencia usuários e grupos
+        -aG grupo usuário - append um usuário a um grupo
+        -u altera o UID
+        
+        
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Kill matar parar processos
+    
+    ps aux | grep processo
+    
+    killall processo
+    
+    kill processo ID
+    kill -9 processo ID
+    
+    https://www.linuxfoundation.org/blog/blog/classic-sysadmin-how-to-kill-a-process-from-the-command-line
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+arrumar SSH:
+
+ssh-keygen -f "/home/eryck/.ssh/known_hosts" -R "192.168.3.***"
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
