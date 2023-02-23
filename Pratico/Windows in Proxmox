@@ -1,0 +1,95 @@
+---------------------------------------------------------------------------------------------------------
+How to install windows in proxmox:
+
+Basically, you need to install the .iso image of windows with a separate CD with drivers.
+
+References:
+    https://pve.proxmox.com/wiki/Windows_10_guest_best_practices
+    https://www.youtube.com/watch?v=eyNlGAzf-L4&list=PLT98CRl2KxKHnlbYhtABg6cF50bYa8Ulo&index=6&ab_channel=LearnLinuxTV
+    https://www.proxmox.com/en/training/video-tutorials/item/install-windows-2016-server-on-proxmox-ve
+    
+---------------------------------------------------------------------------------------------------------
+1- install .iso image and VirtIO drivers:
+
+Install the windows .iso image here: https://www.microsoft.com/en-us/software-download/windows10ISO
+You can simply select the options and then get the URl and paste it to proxmox
+
+The VirtIO drivers can be found here, simply paste this in proxmox:
+https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/stable-virtio/virtio-win.iso
+
+2- Create VM:
+
+Click Create VM;
+In General set the ID and the VM name;
+In OS select the storage where the .iso image is in, the said .iso image;
+In OS, Guest OS set to windows and the version 10/2016/2019;
+In System, select VirtIO SCSI in SCSI controller, also enable Qemu agent;
+In Disks set cache to write back and enable Discard, also set more than 40GiB for disk size;
+In CPU and Memory, set what you think is enough;
+In Network set the model for VirtIO (paravirtualized);
+Click Finish.
+
+3- Add the Drivers Disk to the VM:
+
+Select the windows VM;
+Go to Hardware and add a CD/DVD drive;
+Set the bus to IDE 0;
+Select the Drivers CD and add.
+
+4- Install windows with the wizard.
+
+Follow the steps until you reach the installation type selection where you need to select "Custom (advanced)"
+Select Load Driver and search for the file "CD Drive\virtioscsi\w10\amd64" and proceed with the instalation.
+
+5- Update the Drivers:
+
+Right click on the windows menu and select  "Device Manager" and update any device that needs a new driver.
+Right click on the device, select update driver and browse for your drivers disk.
+You may select the specific driver for that device or select the whole Driver CD and windows will select the
+one it needs.
+
+6- Install the Qemu Agent
+
+Search for the Qemu agent in the Drivers CD. its located in guset-agent\qemu-ga-x86_64.msi for 64 bit.
+run it :3.
+
+7- Configure the Network.
+
+You may not have internet connection due to you not having a DHCP server. to that end simply give your VM
+a static IP.
+Click on the internet icon on the bottom left corner, go to Network and Internet Settings.
+Select your ethernet device and set the IPv4 settings. the mask is 24 , only number format.
+
+done!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---------------------------------------------------------------------------------------------------------
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
