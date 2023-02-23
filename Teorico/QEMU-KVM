@@ -1,0 +1,116 @@
+---------------------------------------------------------------------------------------------------------
+IMPORTANT:
+qemu-kvm package is deprecated, now what you download is qemu-system and KVM will be included
+Instalar qemu-kvm and libvirt
+    sudo apt install qemu-system libvirt-daemon-system
+    sudo adduser eryck libvirt
+    sudo apt install virt-manager
+
+
+---------------------------------------------------------------------------------------------------------
+KVM/QEMU
+
+KVM enables virtualization and readies your server or workstation to host the
+virtual machines. In technical terms, KVM is a set of kernel modules for an x86
+architecture hardware with virtualization extensions; when loaded, it converts a
+Linux server into a virtualization server (hypervisor). The loadable modules are
+kvm.ko, which provides the core virtualization capabilities and a processor-specific
+module.
+
+It is not enough to just load the KVM kernel modules to start your virtual machines.
+You need an emulator to emulate the hardware peripherals for your virtual
+machines. It is now time to introduce QEMU.
+Quick Emulator (QEMU) is an open source machine emulator. This emulator will
+help you to run the operating systems that are designed to run one architecture on
+top of another one. For example, Qemu can run an OS created on the ARM platform
+on the x86 platform; however, there is a catch here. Since QEMU uses dynamic
+translation, which is a technique used to execute virtual machine instructions
+on the host machine, the VMs run slow.
+
+If QEMU is slow, how can it run blazing fast KVM-based virtual machines at a near
+native speed? KVM developers thought about the problem and modified QEMU as
+a solution. This modified QEMU is called qemu-kvm, which can interact with KVM
+modules directly and safely execute instructions from the VM directly on the CPU
+without using dynamic translations. In short, we use qemu-kvm binary to run the
+KVM-based virtual machines.
+
+The KVM or kernel-based virtual machine is not a full hypervisor;
+however, with the help of QEMU and emulators, it can become one. KVM needs hardware virtualization
+capable processors to operate. Using these capabilities, KVM turns the standard
+Linux kernel into a hypervisor. When KVM runs virtual machines, every VM is
+a normal Linux process, which can obviously be scheduled to run on a CPU by
+the host kernel as with any other process present in the host kernel.
+
+KVM uses the standard Linux scheduler, memory management, and other services.
+In short, what KVM does is help the user space program to make use of hardware
+virtualization capabilities. Here, you can treat QEMU as a user space program
+as it's well-integrated for different use cases
+
+QEMU is capable of running without KVM, using the previously mentioned binary
+translation method. This execution will be slower when compared to the
+hardware-accelerated virtualization enabled by KVM.
+
+
+---------------------------------------------------------------------------------------------------------
+QEMU
+
+QEMU is actually a hosted hypervisor/VMM that performs hardware virtualization.
+QEMU can act as an Emulator or Virtualizer:
+
+• Qemu as an Emulator: When QEMU operates as an emulator,
+it is capable of running operating systems/programs made for one machine
+type on a different machine type. It just uses binary translation methods. 
+In this mode, QEMU emulates CPUs through dynamic
+binary translation techniques and provides a set of device models. Thus, it is
+enabled to run different unmodified guest operating systems with different
+architectures. The binary translation is needed here because the guest code
+has to be executed in the host CPU. The binary translator that does this job
+is known as Tiny Code Generator (TCG); it's a Just-In-Time compiler. It
+transforms the binary code written for a given processor to another one (for
+example: ARM in X86):
+
+• Qemu as a virtualizer: This is the mode where QEMU executes the guest
+code directly on the host CPU, thus achieving native performance. For
+example, when working under Xen/KVM hypervisors, QEMU can operate
+in this mode. If KVM is the underlying hypervisor, QEMU can virtualize
+embedded guests such as Power PC, S390, x86, and so on. In short, QEMU
+is capable of running without KVM, using the previously mentioned binary
+translation method. This execution will be slower when compared to the
+hardware-accelerated virtualization enabled by KVM. In any mode (either as
+a virtualizer or emulator), QEMU DOES NOT ONLY emulate the processor, it
+also emulates different peripherals, such as disks, networks, VGA, PCI, serial
+and parallel ports, USB, and so on. Apart from this I/O device emulation,
+when working with KVM, QEMU-KVM creates and initializes virtual
+machines.
+
+
+
+criar usuario do jhon
+
+subir windowns de qualquer forma
+subir windowns da melhor forma possivel
+
+HVM é full, entao da pra mexer com os drivers - boas praticas de cada virtualizador
+
+how to migrar o qcow e o xml do windowns para o proxmox liso
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

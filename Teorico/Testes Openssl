@@ -1,0 +1,210 @@
+comandos usados
+
+1 - construir cluster;
+
+# galera_new_cluster  --> para ativar o primeiro nó do cluster, usei nas 3 maquinas, apenas no 3 nó funcionou
+
+# node 3
+# galera_new_cluster
+# mysql -u root -p
+# SHOW STATUS LIKE 'wsrep_cluster_size';
+#    +--------------------+-------+
+#    | Variable_name      | Value |
+#    +--------------------+-------+
+#    | wsrep_cluster_size | 3     |
+#    +--------------------+-------+
+#    1 row in set (0.001 sec)
+# 
+
+2 - testes de funcionamento; A comunicação realmente esta em texto plano, tcpdump?
+
+# node 1
+# tcpdump -ni enp0s3 -w dump.txt -s 0  --> para analisar o trafego entre os nós
+#   tcpdump: listening on enp0s3, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+#   3966 packets captured
+#   3967 packets received by filter
+#   0 packets dropped by kernel
+
+# node 3 -  com o tcpdump rodando
+    CREATE DATABASE bookworm;
+    Query OK, 1 row affected (0.026 sec)
+    use bookworm
+    MariaDB [bookworm]> CREATE TABLE library(nome CHAR(12));
+    Query OK, 0 rows affected (0.054 sec)
+    MariaDB [bookworm]> INSERT INTO library values('rozemyne'),
+    -> ('elvira'),
+    -> ('angelica'),
+    -> ('ferdie'),
+    -> ('leonore');
+    Query OK, 5 rows affected (0.004 sec)
+    Records: 5  Duplicates: 0  Warnings: 0
+
+# maquina local
+# eryck@debian:~/tcpdump$ scp eryck@192.168.3.150:/home/eryck/dump .
+# rodei o arquivo dump no wireshark e procurei pelos maiores pacotes, e o texto está puro.
+
+
+3 - gerar certificado auto-assinado;
+
+# node 1
+# openssl req -nodes -x509 -days 365 -newkey rsa:4096  -keyout galera-self.key -out galera-self.crt -subj "/C=BR/ST=Sao Paulo/L=Sao Paulo/O=MT4 Networks/OU=MT4 Networks/CN=www.senhasegura.com/emailAddress=segi9@senhasegura.com"
+#   Generating a RSA private key
+    ...............++++
+    ............................................................................................................................................................................................................................. 
+    .......++++
+    writing new private key to 'galera-self.key'
+    -----
+# ls -l
+#   total 8
+    -rw-r--r-- 1 root root 2208 Jan 26 11:48 galera-self.crt
+    -rw------- 1 root root 3272 Jan 26 11:48 galera-self.key
+
+# openssl x509 -noout -text -in galera-self.crt
+# output é o certificado - CA:true
+
+
+4 - construir cluster+ssl;
+
+# copiar o certificado e a chave para todos os nós usando o scp - errei o nome do diretorio :)
+# scp eryck@192.168.3.150:/etc/sll/certs/galera-self.crt /etc/sll/certs/
+# scp eryck@192.168.3.150:/etc/sll/certs/galera-self.crt /etc/sll/certs/
+
+# editar o arquivo /etc/my.cnf
+#   (...)
+#   wsrep_provider_options="socket.ssl_key=/etc/sll/certs/galera-self.key;socket.ssl_cert=/etc/sll/certs/galera-self.crt;..."
+#   (...)
+
+Para aplicar a configuraçao, reinicie todos os nós do cluster e, no ultimo nó a ser desligado, execute galera_new_cluster
+para inicar o cluster novamente. É importante iniciar o cluster no ultimo nó a ser desligado para obter as informaçoes mais 
+atualizadas do banco de dados. a config de bootstrap evita que o nó errado seja iniciado.
+    
+
+5 - testes de funcionamento; A comunicação realmente esta sendo criptografada, tcpdump?
+
+# teste da criptografia sem reiniciar o serviço mysql:
+#   resultado negativo, a criptografia nao foi implementada. arquivo dump2
+#   
+# teste da criptografia depois de reiniciar o serviço mysql, 1 nó de cada vez:
+#   sudo systemctl restart mysql
+#   resultado negativo, serviço mysql quando reiniciado nao é capaz de voltar ao estado ativo, n sei o pq, requer mais testes e analise dos logs -- connection timed out.
+#  
+# teste da criptografia depois de derrubar todos os nós e subindo o ultimo com galera_new_cluster:
+#   sudo systemctl stop mysql - usado em todos os nós
+#   galera_new_cluster - usado no ultimo nó a ser desativado
+#   
+#   sucesso! serviço ativado e criptografia ativa - arquivo dump3
+#     
+
+
+6 - gerar novo certificado auto-assinado;
+
+# renomear os arquivos atuais:
+# mv galera-self.key galera-self-old.key 
+# mv galera-self.crt galera-self-old.crt
+ 
+# Gerando novos certificados, com mesmo nome:
+# 
+# openssl req -nodes -x509 -days 3650 -newkey rsa:4096  -keyout galera-self.key -out galera-self.crt -subj "/C=BR/ST=Sao Paulo/L=Sao Paulo/O=MT4 Networks/OU=MT4 Networks/CN=www.senhasegura.com/
+emailAddress=segi9@senhasegura.com"
+    Generating a RSA private key
+    ...............++++
+    ............................................................................................................................................................................................................................. 
+    .......++++
+    writing new private key to 'galera-self.key'
+    -----
+    
+# ls -l
+    -rw-r--r-- 1 root root 2208 Jan 26 12:44 galera-self.crt
+    -r--r--r-- 1 root root 3272 Jan 26 12:44 galera-self.key
+    -rw-r--r-- 1 root root 2208 Jan 26 11:48 galera-self-old.crt
+    -r--r--r-- 1 root root 3272 Jan 26 11:48 galera-self-old.key
+    
+      
+    
+7 - substituir o certificado a quente; funciona?
+
+N tenho ideia da melhor forma de testar, mas vou tentar algumas coisas.
+Considerando que agora os arquivos são diferentes, vou realizar um tcp dump sem reinicar o serviço mysql.
+
+# teste sem reinicar o serviço mysql
+# 
+# tcpdump -ni enp0s3 -w dump4 -s 0
+    tcpdump: listening on enp0s3, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+    ^C718 packets captured
+    719 packets received by filter
+    0 packets dropped by kernel
+#
+# A analise do arquivo dump4 indica que a criptografia ainda está ativa.
+
+# teste reiniciando apenas 1 nó, afim de testar a teoria de que podem ser usados diferentes certificados para criptografar o trafego
+# 
+# systemctl restart mysql
+#   resultado negativo, serviço nao foi capaz de reinicar:
+#   
+#   journalctl -xe
+#   
+#   Jan 26 12:55:09 Galera-1 mariadbd[2445]: 2023-01-26 12:55:09 0 [Warning] WSREP: last inactive check more than PT1.5S ago (PT3.50548S), skipping check
+    Jan 26 12:55:39 Galera-1 mariadbd[2445]: 2023-01-26 12:55:39 0 [Note] WSREP: PC protocol downgrade 1 -> 0
+    Jan 26 12:55:39 Galera-1 mariadbd[2445]: 2023-01-26 12:55:39 0 [Note] WSREP: view((empty))
+    Jan 26 12:55:39 Galera-1 mariadbd[2445]: 2023-01-26 12:55:39 0 [ERROR] WSREP: failed to open gcomm backend connection: 110: failed to reach primary view: 110 (Connection timed out)
+    Jan 26 12:55:39 Galera-1 mariadbd[2445]:          at ./gcomm/src/pc.cpp:connect():160
+    Jan 26 12:55:39 Galera-1 mariadbd[2445]: 2023-01-26 12:55:39 0 [ERROR] WSREP: ./gcs/src/gcs_core.cpp:gcs_core_open():219: Failed to open backend connection: -110 (Connection timed out)
+    Jan 26 12:55:39 Galera-1 mariadbd[2445]: 2023-01-26 12:55:39 0 [ERROR] WSREP: ./gcs/src/gcs.cpp:gcs_open():1663: Failed to open channel 'galera-training' at 'gcomm://192.168.3.150,192.168.3.151,192.168.3.152': -110 
+    (Connection timed out)
+    Jan 26 12:55:39 Galera-1 mariadbd[2445]: 2023-01-26 12:55:39 0 [ERROR] WSREP: gcs connect failed: Connection timed out
+    Jan 26 12:55:39 Galera-1 mariadbd[2445]: 2023-01-26 12:55:39 0 [ERROR] WSREP: wsrep::connect(gcomm://192.168.3.150,192.168.3.151,192.168.3.152) failed: 7
+     26 12:55:39 Galera-1 mariadbd[2445]: 2023-01-26 12:55:39 0 [ERROR] Aborting
+# 
+
+# Reiniciar todos os nós e iniciar o cluster com galera_new_cluster/
+# 
+# sytemctl stop mysql - feito em todos os nós
+# galera_new_cluster - feito no ultimo nó a ser desligado
+# 
+# Sucesso, serviço ativo e criptografia ativa. - dump5
+# 
+
+
+
+Teoria de usar certificados diferentes:
+pelo o que eu entendi pelos testes, como cada certificado é auto assinado, sem ter uma CA que verifica a autenticidade do certificado
+esse teste nao foi bem sucedido.
+
+Talvez, certificados diferentes assinados pela mesma CA funcione.
+
+
+Pode haver problemas na hora de aplicar um certificado pois é necessáio reinicar o cluster como um todo, todos os nodes,
+uma soluçao é usar apenas 1 CA com certificados assinados por ela: veja o proximo doc : Testes Openssl - CA
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,249 @@
+Title : Virtualization
+Author: Eryck Santos <eryck.ehs@gmail.com> 
+Description: 
+References:
+    https://www.youtube.com/watch?v=zLJbP6vBk2M&ab
+    https://www.youtube.com/watch?v=mQP0wqNT_DI&ab
+
+---------------------------------------------------------------------------------------------------------
+What is virtualization:
+
+    Virtualization is the act of creating virtual enviroments based on a single machine hardware.
+    
+    These virtual enviroments are created on top of a hypervisor, a tool that allows you to create your
+    virtual enviroments and manage the resources that each enviroment consumes. The hypervisor is responsible
+    for separating the physical resources from the virtual enviroments. 
+    
+    The hypervisor can sit on top of an operating system (OS) or be installed directly onto hardware, 
+    these are called type 1, bare-metal, and type 2, hosted, hypervisor.
+
+    Resources are partitioned as needed from the physical environment to the many virtual environments.
+    The area which the users interact with the virtual enviroment is called virtual machine and these work 
+    as a single data file and can be treated the same as any other file.
+    
+    When the virtual environment is running and a user or program issues an instruction that requires 
+    additional resources from the physical environment, the hypervisor relays the request to the physical 
+    system and caches the changes—which all happens at close to native speed
+
+    The virtual machine belives that it is the only machine working, that is to say that each machine is
+    isolated from the others, and changes in one machine does not affect others.
+
+---------------------------------------------------------------------------------------------------------
+Types of virtualization:
+    
+    Short terms:
+    
+    Server virtualization: enables multiple virtual servers to run on a single physical server, sharing the underlying hardware resources.
+
+    Storage virtualization: abstracts the physical storage resources and presents them as a pool of virtual storage.
+
+    Network virtualization: creates a virtual network infrastructure that emulates the functionalities of a physical network.
+
+    Operating system virtualization: enables multiple isolated user-space instances, or containers, to run on a single host operating system.
+
+    Desktop virtualization: enables multiple virtual desktops to run on a single physical machine, providing users with secure and isolated virtual environments.
+
+    Application virtualization: enables applications to run in a virtual environment, independent of the underlying operating system, making it easier to deploy and manage applications.
+
+    Hardware virtualization: enables multiple virtual machines to run on a single physical machine, each with its own operating system and resources.
+
+    Security virtualization: provides virtualized security solutions such as firewalls, intrusion detection systems, and security information and event management (SIEM) systems.
+
+    Database virtualization: enables multiple virtual databases to run on a single physical database server, providing isolation and improving resource utilization.
+    
+    
+    Big baby pants:
+    
+    Data virtualization
+
+    Data that’s spread all over can be consolidated into a single source. Data virtualization allows 
+    companies to treat data as a dynamic supply—providing processing capabilities that can bring together 
+    data from multiple sources, easily accommodate new data sources, and transform data according to user 
+    needs. Data virtualization tools sit in front of multiple data sources and allows them to be treated 
+    as single source, delivering the needed data—in the required form—at the right time to any application 
+    or user.
+
+    Desktop virtualization
+
+    Desktop virtualization allows a central administrator (or automated administration tool) 
+    to deploy simulated desktop environments to hundreds of physical machines at once. Unlike traditional 
+    desktop environments that are physically installed, configured, and updated on each machine, desktop 
+    virtualization allows admins to perform mass configurations, updates, and security checks on all virtual
+    desktops.
+    
+    Server virtualization
+
+    Servers are computers designed to process a high volume of specific tasks really well so other 
+    computers can do a variety of other tasks. Virtualizing a server lets it to do more of those 
+    specific functions and involves partitioning it so that the components can be used to serve multiple 
+    functions.
+        
+    Network virtualization
+    
+    Network virtualization is the process of creating a virtual network infrastructure that emulates the 
+    functionalities of a physical network. It enables multiple virtual networks to coexist on the same 
+    physical network hardware and provides isolation and security between these virtual networks. Network 
+    virtualization enables organizations to deploy, manage and operate multiple, isolated network environments 
+    on shared physical resources, reducing costs, improving resource utilization and enabling new, flexible 
+    network deployment models. The technology behind network virtualization is often implemented through 
+    software-defined networking (SDN) solutions.
+    
+     Network Functions virtualization
+     
+     Network Functions Virtualization (NFV) is a technology that allows network services and functions, 
+     traditionally run on dedicated hardware appliances, to be virtualized and run on industry-standard 
+     high-volume servers, switches, and storage devices. The goal of NFV is to increase network agility 
+     and flexibility, reduce costs, and improve scalability by decoupling network functions from proprietary 
+     hardware and allowing them to be implemented in software that can run on commercial off-the-shelf (COTS) 
+     hardware. This virtualization of network functions enables network operators to rapidly deploy new services, 
+     scale existing ones, and respond more quickly to changing business and customer requirements. Some common
+     examples of network functions that can be virtualized include firewalls, routers, load balancers, and 
+     intrusion detection systems.
+     
+     Operating System Virtualization
+     
+     Also known as OS virtualization or containerization, is a technology that enables multiple isolated 
+     user-space instances, or containers, to run on a single host operating system. Unlike traditional 
+     virtualization, which runs multiple instances of an operating system on top of virtualized hardware, 
+     OS virtualization runs multiple isolated containers on a single host operating system, sharing the host kernel. 
+     This results in more efficient use of system resources and reduced overhead compared to traditional virtualization.
+
+    Storage virtualization
+    
+    Abstracts the physical storage resources and presents them as a pool of virtual storage. LVM?
+     
+---------------------------------------------------------------------------------------------------------
+Passthrough virtualization
+    
+    Passthrough virtualization is a type of virtualization technology that enables direct access to a physical 
+    resource from a virtual machine (VM). In passthrough virtualization, the virtual machine is assigned 
+    exclusive access to a physical resource, such as a network adapter, graphics card, or storage device. 
+    The virtual machine acts as if it has direct access to the physical resource, bypassing the hypervisor or 
+    virtualization layer.
+
+    Passthrough virtualization is used in scenarios where virtual machines require direct access to physical 
+    resources for performance reasons, such as in gaming or graphics-intensive applications. This type of virtualization
+    can also be used to provide a virtual machine with direct access to a specific type of hardware that is not 
+    supported by the hypervisor or virtualization layer.
+
+    Passthrough virtualization can provide improved performance compared to traditional virtualization, as the
+    virtual machine has direct access to the physical resource. However, it also introduces limitations, such as 
+    increased complexity and decreased flexibility, as the virtual machine is tied to the specific physical resource. 
+    Additionally, the virtual machine may not be able to move between different physical hosts, as it is tied to the 
+    specific hardware.
+
+---------------------------------------------------------------------------------------------------------
+Xen 
+
+    Xen is a type of open-source hypervisor technology that provides virtualization capabilities. 
+    It is designed to run multiple virtual machines, each with its own operating system, on a single 
+    physical server. The Xen hypervisor acts as a layer between the physical hardware and the virtual machines, 
+    providing a secure and isolated environment for each virtual machine.
+
+    Xen was one of the first widely-used open-source hypervisor technologies and has been widely adopted in both 
+    enterprise and cloud computing environments. It supports a wide range of operating systems, including Linux, 
+    Windows, and BSD, and provides a range of advanced features, such as live migration of virtual machines, 
+    resource management, and security.
+
+    One of the key benefits of Xen is its ability to provide high performance and scalability, as it has a 
+    lightweight design and is optimized for use with modern hardware. Additionally, Xen is highly customizable, 
+    with a range of extensions and plugins available, and is widely supported by the open-source community, with 
+    a large community of developers and users who contribute to the project and provide support and resources.
+
+    Xen has been widely adopted by many organizations for virtualization, cloud computing, and hosting services, 
+    and is used in a variety of use cases, including virtual desktop infrastructure (VDI), cloud computing, and 
+    enterprise applications.
+
+---------------------------------------------------------------------------------------------------------
+ProxMox
+
+    Proxmox is an open-source virtualization platform that provides a centralized management solution for 
+    virtual servers and containers. It is based on the Debian operating system and the Linux kernel, and 
+    is designed to be a flexible and scalable virtualization solution for organizations of all sizes.
+
+    Proxmox uses the KVM (Kernel-based Virtual Machine) and LXC (Linux Containers) virtualization technologies 
+    to provide both full virtualization and container-based virtualization. This allows users to run multiple 
+    virtual machines and containers on a single physical server, each with its own operating system and resources.
+
+    One of the key features of Proxmox is its user-friendly web interface, which provides a centralized management 
+    console for virtual machines and containers. The interface allows administrators to easily create, manage, and 
+    monitor virtual machines and containers, as well as manage storage, network, and security.
+
+    Proxmox also provides a range of advanced features, such as live migration of virtual machines, high availability, 
+    and backup and restore capabilities. Additionally, Proxmox supports a range of storage technologies, 
+    including local storage, shared storage, and network-attached storage (NAS).
+
+    Proxmox is a popular choice for organizations looking for a cost-effective virtualization solution, 
+    as it is open-source software and does not require licensing fees. It is also widely supported by the 
+    open-source community, with a large community of developers and users who contribute to the project 
+    and provide support and resources.
+
+---------------------------------------------------------------------------------------------------------
+What is the main difference between proxmox and xen
+
+    Proxmox and Xen are both open-source virtualization solutions that allow multiple virtual machines and 
+    containers to run on a single physical server. However, there are some key differences between the two:
+
+    Hypervisor technology: Proxmox uses the KVM (Kernel-based Virtual Machine) and LXC (Linux Containers) 
+    virtualization technologies, while Xen uses the Xen hypervisor technology.
+
+    User interface: Proxmox provides a user-friendly web interface for centralized management of virtual 
+    machines and containers, while Xen relies on the command-line interface for management tasks.
+
+    Scalability and performance: Proxmox is designed to be scalable and flexible, and provides a range of 
+    advanced features such as live migration and high availability. Xen is also highly scalable and performant, 
+    but may require more advanced knowledge and configuration to achieve these features.
+
+    Ease of use: Proxmox is considered to be easier to use and more accessible to a wider range of users, 
+    while Xen may require more advanced technical knowledge and experience to fully utilize its features and capabilities.
+
+---------------------------------------------------------------------------------------------------------
+There are three main types of virtualization, each with a different approach to virtualizing hardware resources:
+
+    Para-virtualization: Para-virtualization uses a thin layer of software, known as a hypervisor, 
+    to provide virtualized access to the physical hardware. In para-virtualization, virtual machines
+    share the same operating system kernel, but run their own user-space components. This means that 
+    the virtual machines must be modified to work in a para-virtualized environment, which can limit
+    the compatibility of the virtualized environment.
+
+    Full virtualization: Full virtualization uses a hypervisor to provide a complete virtualized environment, 
+    including virtualized hardware resources such as CPU, memory, and storage. This approach allows unmodified 
+    operating systems and applications to run in the virtualized environment, without modification. However, 
+    full virtualization can result in a performance overhead, as the hypervisor must emulate the physical hardware.
+
+    Hardware-assisted virtualization: Hardware-assisted virtualization, also known as hardware virtualization,
+    uses hardware features built into modern processors to provide a virtualized environment. This type of 
+    virtualization provides a high level of performance and compatibility, as the virtualized environment is 
+    closer to the physical hardware.
+
+---------------------------------------------------------------------------------------------------------
+Why use VM over a Container:
+
+    Both are ways to virtualize a system.
+    Containers consume less resoucers when compared to VMs because when you allocate a resource for a VM
+    it will take up all of the resource assinged to it. But containers only use what is nedded, even when 
+    assinged more than it needs.
+    It is also nedded to take into consideration that containers can not be live migrated, but VMs can.
+    Live migration is to change the location of the container/VM from one server to another, considering 
+    thay are in a cluster. Containers need to be shutdown and they copy its data to the other location,
+    taking time and availability of the application running on top of it. While VMs do not need to shutdown
+    and their migration time is considerably less than the container counterpart.
+
+---------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
